@@ -1,261 +1,122 @@
 import { useState } from "react";
 
 const KelolaPakaian = () => {
-  // ==========================================
-  // STATE: PAKAIAN KILOAN (RANGE & HARGA)
-  // ==========================================
-  const [kiloan, setKiloan] = useState({
-    batasBerat: 3,
-    hargaBawah: 7000, // Harga jika di bawah batas
-    hargaAtas: 6000,  // Harga jika di atas/sama dengan batas
-  });
+  const [kiloan, setKiloan] = useState({ batasBerat: 3, hargaBawah: 7000, hargaAtas: 6000 });
   const [isEditingKiloan, setIsEditingKiloan] = useState(false);
   const [tempKiloan, setTempKiloan] = useState({ ...kiloan });
-
-  const handleSimpanKiloan = () => {
-    setKiloan(tempKiloan);
-    setIsEditingKiloan(false);
-  };
-
-  // ==========================================
-  // STATE: CRUD PAKAIAN SPESIFIK (SATUAN)
-  // ==========================================
   const [spesifikList, setSpesifikList] = useState([
     { id: 1, nama: "Jas", harga: 15000 },
     { id: 2, nama: "Sprei Besar", harga: 12000 },
-    { id: 3, nama: "Handuk Mandi", harga: 5000 },
   ]);
-  
-  // State untuk Form CRUD
   const [formData, setFormData] = useState({ id: null, nama: "", harga: "" });
   const [isEditingSpesifik, setIsEditingSpesifik] = useState(false);
 
+  const handleSimpanKiloan = () => { setKiloan(tempKiloan); setIsEditingKiloan(false); };
   const handleSimpanSpesifik = (e) => {
     e.preventDefault();
-    if (isEditingSpesifik) {
-      // Update data
-      setSpesifikList(spesifikList.map(item => 
-        item.id === formData.id ? { ...formData, harga: Number(formData.harga) } : item
-      ));
-    } else {
-      // Tambah data baru
-      const newItem = {
-        id: Date.now(), // Generate ID sederhana
-        nama: formData.nama,
-        harga: Number(formData.harga)
-      };
-      setSpesifikList([...spesifikList, newItem]);
-    }
-    // Reset Form
-    setFormData({ id: null, nama: "", harga: "" });
-    setIsEditingSpesifik(false);
+    if (isEditingSpesifik) { setSpesifikList(spesifikList.map(item => item.id === formData.id ? { ...formData, harga: Number(formData.harga) } : item)); } 
+    else { setSpesifikList([...spesifikList, { id: Date.now(), nama: formData.nama, harga: Number(formData.harga) }]); }
+    setFormData({ id: null, nama: "", harga: "" }); setIsEditingSpesifik(false);
   };
-
-  const handleEditClick = (item) => {
-    setFormData({ id: item.id, nama: item.nama, harga: item.harga });
-    setIsEditingSpesifik(true);
-  };
-
-  const hapusSpesifik = (id) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus pakaian ini?")) {
-      setSpesifikList(spesifikList.filter(item => item.id !== id));
-    }
-  };
-
-  const batalkanEditSpesifik = () => {
-    setFormData({ id: null, nama: "", harga: "" });
-    setIsEditingSpesifik(false);
-  };
+  const hapusSpesifik = (id) => { if (window.confirm("Hapus pakaian ini?")) setSpesifikList(spesifikList.filter(item => item.id !== id)); };
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-8 pb-10">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Kelola Harga & Pakaian</h1>
-        <p className="text-gray-500 mt-1">Atur tarif dasar kiloan dan harga khusus per satuan (pcs).</p>
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Kelola Harga & Pakaian</h1>
+        <p className="text-slate-500 mt-1.5 font-medium">Atur tarif dasar kiloan dan tarif satuan dengan mudah.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* ========================================== */}
-        {/* BAGIAN 1: PENGATURAN KILOAN (Kiri)         */}
-        {/* ========================================== */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex justify-between items-center border-b pb-3 mb-4">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                Tarif Kiloan
-              </h2>
-              {!isEditingKiloan && (
-                <button 
-                  onClick={() => setIsEditingKiloan(true)}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium bg-blue-50 px-3 py-1 rounded"
-                >
-                  Edit Aturan
-                </button>
-              )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Tarif Kiloan */}
+        <div className="lg:col-span-1">
+          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200/60 sticky top-28">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
+              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">⚖️ Tarif Kiloan</h2>
+              {!isEditingKiloan && <button onClick={() => setIsEditingKiloan(true)} className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg transition-colors">Edit</button>}
             </div>
 
             {!isEditingKiloan ? (
-              <div className="space-y-4">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                  <p className="text-sm text-gray-600">Jika berat <span className="font-bold text-blue-700">di bawah {kiloan.batasBerat} Kg</span> :</p>
-                  <p className="text-xl font-bold text-gray-900 mt-1">Rp {kiloan.hargaBawah.toLocaleString('id-ID')} <span className="text-sm font-normal text-gray-500">/ Kg</span></p>
+              <div className="space-y-5">
+                <div className="bg-gradient-to-br from-indigo-50 to-white p-5 rounded-xl border border-indigo-100 shadow-sm">
+                  <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Berat &lt; {kiloan.batasBerat} Kg</p>
+                  <p className="text-3xl font-extrabold text-indigo-900 mt-2">Rp {kiloan.hargaBawah.toLocaleString('id-ID')} <span className="text-sm font-medium text-indigo-400">/Kg</span></p>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                  <p className="text-sm text-gray-600">Jika berat <span className="font-bold text-green-700">{kiloan.batasBerat} Kg atau lebih</span> :</p>
-                  <p className="text-xl font-bold text-gray-900 mt-1">Rp {kiloan.hargaAtas.toLocaleString('id-ID')} <span className="text-sm font-normal text-gray-500">/ Kg</span></p>
+                <div className="bg-gradient-to-br from-emerald-50 to-white p-5 rounded-xl border border-emerald-100 shadow-sm">
+                  <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Berat ≥ {kiloan.batasBerat} Kg</p>
+                  <p className="text-3xl font-extrabold text-emerald-900 mt-2">Rp {kiloan.hargaAtas.toLocaleString('id-ID')} <span className="text-sm font-medium text-emerald-500">/Kg</span></p>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Batas Berat (Kg)</label>
-                  <input 
-                    type="number" 
-                    value={tempKiloan.batasBerat}
-                    onChange={(e) => setTempKiloan({...tempKiloan, batasBerat: Number(e.target.value)})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
-                  />
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Batas Berat (Kg)</label>
+                  <input type="number" value={tempKiloan.batasBerat} onChange={(e) => setTempKiloan({...tempKiloan, batasBerat: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/50" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Harga di Bawah Batas (Rp)</label>
-                  <input 
-                    type="number" 
-                    value={tempKiloan.hargaBawah}
-                    onChange={(e) => setTempKiloan({...tempKiloan, hargaBawah: Number(e.target.value)})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
-                  />
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Harga &lt; Batas (Rp)</label>
+                  <input type="number" value={tempKiloan.hargaBawah} onChange={(e) => setTempKiloan({...tempKiloan, hargaBawah: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/50" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Harga di Atas Batas (Rp)</label>
-                  <input 
-                    type="number" 
-                    value={tempKiloan.hargaAtas}
-                    onChange={(e) => setTempKiloan({...tempKiloan, hargaAtas: Number(e.target.value)})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
-                  />
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Harga ≥ Batas (Rp)</label>
+                  <input type="number" value={tempKiloan.hargaAtas} onChange={(e) => setTempKiloan({...tempKiloan, hargaAtas: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/50" />
                 </div>
-                <div className="flex gap-2 pt-2">
-                  <button 
-                    onClick={() => {
-                      setTempKiloan({...kiloan}); // Reset
-                      setIsEditingKiloan(false);
-                    }}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 rounded-lg transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button 
-                    onClick={handleSimpanKiloan}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg shadow transition-colors"
-                  >
-                    Simpan
-                  </button>
+                <div className="flex gap-3 pt-2">
+                  <button onClick={() => { setTempKiloan({...kiloan}); setIsEditingKiloan(false); }} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors">Batal</button>
+                  <button onClick={handleSimpanKiloan} className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5">Simpan</button>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* ========================================== */}
-        {/* BAGIAN 2: PAKAIAN SPESIFIK (Kanan)         */}
-        {/* ========================================== */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center gap-2">
-              Pakaian Spesifik (Per Satuan/Pcs)
-            </h2>
+        {/* Pakaian Spesifik */}
+        <div className="lg:col-span-2">
+          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200/60">
+            <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6 flex items-center gap-2">👔 Pakaian Satuan (Pcs)</h2>
             
-            {/* Form Tambah/Edit */}
-            <form onSubmit={handleSimpanSpesifik} className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 items-end">
+            <form onSubmit={handleSimpanSpesifik} className="bg-slate-50/80 p-5 md:p-6 rounded-2xl border border-slate-200/60 mb-8 flex flex-col md:flex-row gap-5 items-end shadow-inner">
               <div className="flex-1 w-full">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pakaian (Mis: Jas, Selimut)</label>
-                <input 
-                  type="text" 
-                  required
-                  value={formData.nama}
-                  onChange={(e) => setFormData({...formData, nama: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
-                  placeholder="Masukkan nama..."
-                />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nama Pakaian</label>
+                <input type="text" required value={formData.nama} onChange={(e) => setFormData({...formData, nama: e.target.value})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium" placeholder="Jas, Karpet..." />
               </div>
               <div className="flex-1 w-full">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Harga Per Pcs (Rp)</label>
-                <input 
-                  type="number" 
-                  required
-                  value={formData.harga}
-                  onChange={(e) => setFormData({...formData, harga: e.target.value})}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500"
-                  placeholder="Contoh: 15000"
-                />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Harga (Rp)</label>
+                <input type="number" required value={formData.harga} onChange={(e) => setFormData({...formData, harga: e.target.value})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium" placeholder="15000" />
               </div>
-              <div className="w-full md:w-auto flex gap-2">
-                {isEditingSpesifik && (
-                  <button 
-                    type="button"
-                    onClick={batalkanEditSpesifik}
-                    className="bg-gray-400 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                  >
-                    Batal
-                  </button>
-                )}
-                <button 
-                  type="submit"
-                  className={`${isEditingSpesifik ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-gray-800 hover:bg-gray-900'} text-white font-medium py-2 px-6 rounded-lg shadow transition-colors`}
-                >
+              <div className="w-full md:w-auto flex gap-3">
+                {isEditingSpesifik && <button type="button" onClick={() => {setFormData({ id: null, nama: "", harga: "" }); setIsEditingSpesifik(false);}} className="bg-slate-200 text-slate-700 font-bold py-3 px-5 rounded-xl">Batal</button>}
+                <button type="submit" className={`${isEditingSpesifik ? 'bg-amber-500 hover:bg-amber-400' : 'bg-slate-800 hover:bg-slate-700'} text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all transform hover:-translate-y-0.5`}>
                   {isEditingSpesifik ? 'Update' : '+ Tambah'}
                 </button>
               </div>
             </form>
 
-            {/* Tabel Pakaian Spesifik */}
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+            <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-100 text-gray-700 text-sm">
-                    <th className="px-6 py-3 font-semibold border-b">Nama Pakaian</th>
-                    <th className="px-6 py-3 font-semibold border-b">Harga / Pcs</th>
-                    <th className="px-6 py-3 font-semibold border-b text-center">Aksi</th>
+                  <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
+                    <th className="px-4 py-3 font-bold">Nama Pakaian</th>
+                    <th className="px-4 py-3 font-bold">Harga / Pcs</th>
+                    <th className="px-4 py-3 font-bold text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 text-sm">
-                  {spesifikList.length === 0 ? (
-                    <tr>
-                      <td colSpan="3" className="px-6 py-8 text-center text-gray-500">
-                        Belum ada data pakaian spesifik.
+                <tbody className="text-sm font-medium">
+                  {spesifikList.map((item) => (
+                    <tr key={item.id} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 group">
+                      <td className="px-4 py-4 text-slate-800 font-bold">{item.nama}</td>
+                      <td className="px-4 py-4 text-slate-600">Rp {item.harga.toLocaleString('id-ID')}</td>
+                      <td className="px-4 py-4 flex justify-end gap-2 transition-opacity">
+                        <button onClick={() => {setFormData(item); setIsEditingSpesifik(true);}} className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg font-bold text-xs">Edit</button>
+                        <button onClick={() => hapusSpesifik(item.id)} className="bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-1.5 rounded-lg font-bold text-xs">Hapus</button>
                       </td>
                     </tr>
-                  ) : (
-                    spesifikList.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 font-medium text-gray-800">{item.nama}</td>
-                        <td className="px-6 py-3 text-gray-600">Rp {item.harga.toLocaleString('id-ID')}</td>
-                        <td className="px-6 py-3 flex justify-center gap-3">
-                          <button 
-                            onClick={() => handleEditClick(item)}
-                            className="text-yellow-600 hover:text-yellow-800 font-medium"
-                          >
-                            Edit
-                          </button>
-                          <span className="text-gray-300">|</span>
-                          <button 
-                            onClick={() => hapusSpesifik(item.id)}
-                            className="text-red-600 hover:text-red-800 font-medium"
-                          >
-                            Hapus
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
-
           </div>
         </div>
-        
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom"; // <-- Import Link ditambahkan di sini
 
 const InputCucian = () => {
-  // --- DUMMY DATA ---
   const dataPelanggan = [
     { id: 1, nama: "Budi Santoso", hp: "08123456789" },
     { id: 2, nama: "Siti Aminah", hp: "08987654321" },
@@ -14,208 +14,127 @@ const InputCucian = () => {
   ];
   const jenisPakaianList = ["Kaos", "Kemeja", "Celana Panjang", "Handuk", "Sprei", "Jas", "Jaket"];
 
-  // --- STATE FORM ---
   const [pelanggan, setPelanggan] = useState("");
   const [layanan, setLayanan] = useState("");
   const [berat, setBerat] = useState(1);
-  
-  // State untuk Rincian Pakaian
   const [rincian, setRincian] = useState([]);
   const [tempPakaian, setTempPakaian] = useState(jenisPakaianList[0]);
   const [tempJumlah, setTempJumlah] = useState(1);
 
-  // --- LOGIKA ---
   const layananTerpilih = dataLayanan.find(l => l.id === Number(layanan));
   const totalHarga = layananTerpilih ? layananTerpilih.harga * berat : 0;
 
   const tambahRincian = () => {
     if (tempJumlah > 0) {
       setRincian([...rincian, { jenis: tempPakaian, jumlah: tempJumlah }]);
-      setTempJumlah(1); // Reset jumlah
+      setTempJumlah(1);
     }
   };
-
-  const hapusRincian = (index) => {
-    const newRincian = rincian.filter((_, i) => i !== index);
-    setRincian(newRincian);
-  };
+  const hapusRincian = (index) => setRincian(rincian.filter((_, i) => i !== index));
 
   const handleSimpanTransaksi = () => {
     alert("Transaksi Berhasil Disimpan! Nota siap dicetak.");
-    // Logika simpan ke database nantinya di sini
-    setRincian([]);
-    setLayanan("");
-    setPelanggan("");
-    setBerat(1);
+    setRincian([]); setLayanan(""); setPelanggan(""); setBerat(1);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-10 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Input Cucian Baru</h1>
-        <p className="text-gray-500 mt-1">Halaman kasir untuk mencatat pesanan masuk.</p>
+        <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Input Cucian Baru</h1>
+        <p className="text-slate-500 mt-1.5 font-medium">Sistem kasir cerdas untuk mencatat pesanan pelanggan.</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        
-        {/* BAGIAN KIRI: FORM INPUT (Lebar 60% di Desktop) */}
-        <div className="w-full lg:w-2/3 space-y-6">
-          
-          {/* 1. Form Pelanggan & Layanan */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
-            <h2 className="text-lg font-bold text-gray-800 border-b pb-2">Data Pesanan</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex flex-col xl:flex-row gap-8">
+        {/* BAGIAN KIRI: FORM INPUT */}
+        <div className="w-full xl:w-2/3 space-y-8">
+          <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200/60">
+            <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6 flex items-center gap-2">📦 Data Pesanan Utama</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pilih Pelanggan</label>
-                <select 
-                  value={pelanggan} 
-                  onChange={(e) => setPelanggan(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
-                >
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pilih Pelanggan</label>
+                <select value={pelanggan} onChange={(e) => setPelanggan(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-700 cursor-pointer appearance-none">
                   <option value="">-- Pilih Pelanggan --</option>
-                  {dataPelanggan.map(p => (
-                    <option key={p.id} value={p.id}>{p.nama} ({p.hp})</option>
-                  ))}
+                  {dataPelanggan.map(p => <option key={p.id} value={p.id}>{p.nama} ({p.hp})</option>)}
                 </select>
-                <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline">+ Tambah Pelanggan Baru</p>
+                
+                {/* TOMBOL PINTASAN YANG SUDAH BISA DIKLIK */}
+                <Link to="/karyawan/kelola-pelanggan" className="text-xs text-indigo-600 mt-2 font-bold cursor-pointer hover:text-indigo-800 transition-colors inline-block">
+                  + Tambah Pelanggan Baru
+                </Link>
               </div>
-
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pilih Layanan</label>
-                <select 
-                  value={layanan} 
-                  onChange={(e) => setLayanan(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
-                >
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pilih Layanan</label>
+                <select value={layanan} onChange={(e) => setLayanan(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-700 cursor-pointer appearance-none">
                   <option value="">-- Pilih Layanan --</option>
-                  {dataLayanan.map(l => (
-                    <option key={l.id} value={l.id}>{l.nama} - Rp {l.harga}/{l.satuan}</option>
-                  ))}
+                  {dataLayanan.map(l => <option key={l.id} value={l.id}>{l.nama} - Rp {l.harga}/{l.satuan}</option>)}
                 </select>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jumlah / Berat ({layananTerpilih ? layananTerpilih.satuan : "Kg"})
-                </label>
-                <input 
-                  type="number" 
-                  min="1"
-                  value={berat}
-                  onChange={(e) => setBerat(Number(e.target.value))}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jumlah / Berat ({layananTerpilih ? layananTerpilih.satuan : "Kg"})</label>
+                <input type="number" min="1" value={berat} onChange={(e) => setBerat(Number(e.target.value))} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold text-slate-800 text-lg" />
               </div>
             </div>
           </div>
 
-          {/* 2. Form Rincian Pakaian */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4">
-            <h2 className="text-lg font-bold text-gray-800 border-b pb-2">Rincian Pakaian (Opsional)</h2>
-            
-            <div className="flex flex-col md:flex-row gap-3 items-end">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Pakaian</label>
-                <select 
-                  value={tempPakaian} 
-                  onChange={(e) => setTempPakaian(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {jenisPakaianList.map(jp => (
-                    <option key={jp} value={jp}>{jp}</option>
-                  ))}
+          <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200/60">
+            <h2 className="text-lg font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6 flex items-center gap-2">👕 Rincian Pakaian (Opsional)</h2>
+            <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100/50 flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Jenis Pakaian</label>
+                <select value={tempPakaian} onChange={(e) => setTempPakaian(e.target.value)} className="w-full bg-white border border-indigo-100 rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium cursor-pointer appearance-none">
+                  {jenisPakaianList.map(jp => <option key={jp} value={jp}>{jp}</option>)}
                 </select>
               </div>
               <div className="w-full md:w-32">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah</label>
-                <input 
-                  type="number" 
-                  min="1"
-                  value={tempJumlah}
-                  onChange={(e) => setTempJumlah(Number(e.target.value))}
-                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <label className="block text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Jumlah</label>
+                <input type="number" min="1" value={tempJumlah} onChange={(e) => setTempJumlah(Number(e.target.value))} className="w-full bg-white border border-indigo-100 rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-bold" />
               </div>
-              <button 
-                onClick={tambahRincian}
-                className="w-full md:w-auto bg-gray-800 hover:bg-gray-900 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
-              >
-                + Tambah
+              <button onClick={tambahRincian} className="w-full md:w-auto bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-8 rounded-xl transition-all transform hover:-translate-y-0.5 shadow-md">
+                Tambah
               </button>
             </div>
-
-            {/* List Rincian yang ditambahkan */}
             {rincian.length > 0 && (
-              <div className="mt-4 bg-gray-50 rounded-lg p-3 border border-gray-200 flex flex-wrap gap-2">
+              <div className="mt-6 flex flex-wrap gap-2">
                 {rincian.map((item, index) => (
-                  <span key={index} className="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm">
-                    {item.jumlah}x {item.jenis}
-                    <button onClick={() => hapusRincian(index)} className="text-red-500 hover:text-red-700 font-bold ml-1">×</button>
+                  <span key={index} className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-3 shadow-sm">
+                    <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md">{item.jumlah}x</span> {item.jenis}
+                    <button onClick={() => hapusRincian(index)} className="text-slate-400 hover:text-rose-500 transition-colors">✕</button>
                   </span>
                 ))}
               </div>
             )}
           </div>
-
         </div>
 
-        {/* BAGIAN KANAN: PREVIEW NOTA (Lebar 33% di Desktop) */}
-        <div className="w-full lg:w-1/3">
-          <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100 sticky top-6">
-            <h2 className="text-center font-bold text-xl text-gray-800 mb-4 pb-4 border-b border-dashed border-gray-300">
-              Struk Pesanan
-            </h2>
-            
-            <div className="space-y-3 text-sm text-gray-600 mb-6">
-              <div className="flex justify-between">
-                <span>Pelanggan:</span>
-                <span className="font-semibold text-gray-800">
-                  {pelanggan ? dataPelanggan.find(p => p.id === Number(pelanggan))?.nama : "-"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Layanan:</span>
-                <span className="font-semibold text-gray-800">{layananTerpilih ? layananTerpilih.nama : "-"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Berat/Jumlah:</span>
-                <span className="font-semibold text-gray-800">{berat} {layananTerpilih?.satuan || ""}</span>
-              </div>
-              
+        {/* BAGIAN KANAN: PREVIEW NOTA DARK MODE */}
+        <div className="w-full xl:w-1/3">
+          <div className="bg-gradient-to-b from-slate-900 to-indigo-950 p-8 rounded-3xl shadow-xl shadow-indigo-900/20 sticky top-28 border border-slate-700/50">
+            <h2 className="text-center font-extrabold text-xl text-white mb-6 pb-6 border-b border-dashed border-slate-700">STRUK PESANAN</h2>
+            <div className="space-y-4 text-sm text-slate-300 mb-8 font-medium">
+              <div className="flex justify-between items-center"><span className="text-slate-400">Pelanggan</span><span className="font-bold text-white text-base">{pelanggan ? dataPelanggan.find(p => p.id === Number(pelanggan))?.nama : "-"}</span></div>
+              <div className="flex justify-between items-center"><span className="text-slate-400">Layanan</span><span className="font-bold text-white text-base text-right">{layananTerpilih ? layananTerpilih.nama : "-"}</span></div>
+              <div className="flex justify-between items-center"><span className="text-slate-400">Berat/Jml</span><span className="font-bold text-white text-base">{berat} {layananTerpilih?.satuan || ""}</span></div>
               {rincian.length > 0 && (
-                <div className="pt-2">
-                  <span className="block mb-1">Rincian Isi:</span>
-                  <ul className="list-disc pl-5 text-gray-500">
+                <div className="pt-4 mt-4 border-t border-slate-800">
+                  <span className="block mb-2 text-slate-400">Rincian Isi:</span>
+                  <ul className="space-y-1.5">
                     {rincian.map((item, index) => (
-                      <li key={index}>{item.jumlah} pcs {item.jenis}</li>
+                      <li key={index} className="flex justify-between"><span className="text-slate-300">{item.jenis}</span><span className="font-bold text-white">{item.jumlah} pcs</span></li>
                     ))}
                   </ul>
                 </div>
               )}
             </div>
-
-            <div className="border-t border-dashed border-gray-300 pt-4 mb-6">
-              <div className="flex justify-between items-center">
-                <span className="font-bold text-gray-800">Total Bayar</span>
-                <span className="font-bold text-2xl text-blue-600">
-                  Rp {totalHarga.toLocaleString('id-ID')}
-                </span>
-              </div>
+            <div className="bg-white/10 p-5 rounded-2xl mb-8 border border-white/5 backdrop-blur-sm">
+              <span className="block text-xs font-bold text-indigo-300 uppercase tracking-wider mb-1">Total Bayar</span>
+              <span className="font-extrabold text-3xl text-white">Rp {totalHarga.toLocaleString('id-ID')}</span>
             </div>
-
-            <button 
-              onClick={handleSimpanTransaksi}
-              disabled={!pelanggan || !layanan}
-              className={`w-full py-3 rounded-lg font-bold text-white transition-colors shadow-md ${
-                !pelanggan || !layanan ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
-              }`}
-            >
+            <button onClick={handleSimpanTransaksi} disabled={!pelanggan || !layanan} className={`w-full py-4 rounded-2xl font-extrabold text-white transition-all transform ${!pelanggan || !layanan ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 shadow-lg shadow-emerald-500/30 hover:-translate-y-1"}`}>
               Simpan & Cetak Nota
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );

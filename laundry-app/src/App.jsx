@@ -19,6 +19,7 @@ const Laporan = lazy(() => import('./pages/owner/Laporan'));
 const KelolaPelanggan = lazy(() => import('./pages/karyawan/KelolaPelanggan'));
 const InputCucian = lazy(() => import('./pages/karyawan/InputCucian'));
 const KelolaNota = lazy(() => import('./pages/karyawan/KelolaNota'));
+const DetailNota = lazy(() => import('./pages/karyawan/DetailNota'));
 
 const ProtectedRoute = ({ children, allowedRole }) => {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -69,6 +70,8 @@ function App() {
                 <Route path="input-cucian" element={<InputCucian />} />
                 <Route path="kelola-pelanggan" element={<KelolaPelanggan />} />
                 <Route path="kelola-nota" element={<KelolaNota />} />
+                {/* INI ADALAH DYNAMIC ROUTE (:id akan menangkap kode nota) */}
+                <Route path="kelola-nota/:id" element={<DetailNota />} /> 
               </Routes>
             </ProtectedRoute>
           } />
