@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Swal from "sweetalert2"; // <-- Import SweetAlert2
 
 const KelolaPakaian = () => {
   const [kiloan, setKiloan] = useState({ batasBerat: 3, hargaBawah: 7000, hargaAtas: 6000 });
@@ -11,14 +12,43 @@ const KelolaPakaian = () => {
   const [formData, setFormData] = useState({ id: null, nama: "", harga: "" });
   const [isEditingSpesifik, setIsEditingSpesifik] = useState(false);
 
-  const handleSimpanKiloan = () => { setKiloan(tempKiloan); setIsEditingKiloan(false); };
+  // Fungsi simpan dengan SweetAlert
+  const handleSimpanKiloan = () => { 
+    setKiloan(tempKiloan); 
+    setIsEditingKiloan(false);
+    Swal.fire({ title: "Berhasil!", text: "Tarif kiloan berhasil diperbarui.", icon: "success", timer: 1500, showConfirmButton: false });
+  };
+
   const handleSimpanSpesifik = (e) => {
     e.preventDefault();
-    if (isEditingSpesifik) { setSpesifikList(spesifikList.map(item => item.id === formData.id ? { ...formData, harga: Number(formData.harga) } : item)); } 
-    else { setSpesifikList([...spesifikList, { id: Date.now(), nama: formData.nama, harga: Number(formData.harga) }]); }
-    setFormData({ id: null, nama: "", harga: "" }); setIsEditingSpesifik(false);
+    if (isEditingSpesifik) { 
+      setSpesifikList(spesifikList.map(item => item.id === formData.id ? { ...formData, harga: Number(formData.harga) } : item)); 
+    } else { 
+      setSpesifikList([...spesifikList, { id: Date.now(), nama: formData.nama, harga: Number(formData.harga) }]); 
+    }
+    setFormData({ id: null, nama: "", harga: "" }); 
+    setIsEditingSpesifik(false);
+    Swal.fire({ title: "Tersimpan!", text: "Data pakaian berhasil disimpan.", icon: "success", timer: 1500, showConfirmButton: false });
   };
-  const hapusSpesifik = (id) => { if (window.confirm("Hapus pakaian ini?")) setSpesifikList(spesifikList.filter(item => item.id !== id)); };
+
+  // Fungsi hapus dengan konfirmasi SweetAlert
+  const hapusSpesifik = (id) => { 
+    Swal.fire({
+      title: "Hapus Pakaian?",
+      text: "Data ini tidak akan muncul lagi di halaman kasir!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setSpesifikList(spesifikList.filter(item => item.id !== id));
+        Swal.fire({ title: "Terhapus!", text: "Pakaian berhasil dihapus.", icon: "success", confirmButtonColor: "#4f46e5" });
+      }
+    });
+  };
 
   return (
     <div className="space-y-8 pb-10">

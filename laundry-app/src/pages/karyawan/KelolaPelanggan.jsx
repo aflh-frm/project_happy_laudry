@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 
 const KelolaPelanggan = () => {
   const [pelanggan, setPelanggan] = useState([
@@ -43,9 +44,26 @@ const KelolaPelanggan = () => {
   };
 
   const hapusPelanggan = (id) => {
-    if (window.confirm("Hapus data pelanggan ini?")) {
-      setPelanggan(pelanggan.filter(p => p.id !== id));
-    }
+    Swal.fire({
+      title: "Hapus Pelanggan?",
+      text: "Data yang dihapus tidak dapat dikembalikan!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48", // Warna Rose-600
+      cancelButtonColor: "#64748b", // Warna Slate-500
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setPelanggan(pelanggan.filter(p => p.id !== id));
+        Swal.fire({
+          title: "Terhapus!",
+          text: "Data pelanggan berhasil dihapus.",
+          icon: "success",
+          confirmButtonColor: "#4f46e5"
+        });
+      }
+    });
   };
 
   return (

@@ -1,25 +1,48 @@
 import { useState } from "react";
+import Swal from "sweetalert2"; // <-- Import SweetAlert2
 
 const KelolaLayanan = () => {
-  // Ubah data estimasi default menjadi Tipe Angka (Number)
   const [layananList, setLayananList] = useState([
     { id: 1, nama: "Cuci Komplit (Reguler)", harga: 6000, satuan: "Kg", estimasi: 3 },
     { id: 2, nama: "Cuci Komplit (Kilat)", harga: 10000, satuan: "Kg", estimasi: 1 },
   ]);
   
-  // State form estimasi diinisialisasi kosong tanpa teks 'Hari'
   const [formData, setFormData] = useState({ id: null, nama: "", harga: "", satuan: "Kg", estimasi: "" });
   const [isEditing, setIsEditing] = useState(false);
 
+  // Fungsi simpan dengan SweetAlert
   const handleSimpan = (e) => {
     e.preventDefault();
-    if (isEditing) setLayananList(layananList.map(item => item.id === formData.id ? { ...formData, harga: Number(formData.harga), estimasi: Number(formData.estimasi) } : item));
-    else setLayananList([...layananList, { ...formData, id: Date.now(), harga: Number(formData.harga), estimasi: Number(formData.estimasi) }]);
-    setFormData({ id: null, nama: "", harga: "", satuan: "Kg", estimasi: "" }); setIsEditing(false);
+    if (isEditing) {
+      setLayananList(layananList.map(item => item.id === formData.id ? { ...formData, harga: Number(formData.harga), estimasi: Number(formData.estimasi) } : item));
+    } else {
+      setLayananList([...layananList, { ...formData, id: Date.now(), harga: Number(formData.harga), estimasi: Number(formData.estimasi) }]);
+    }
+    setFormData({ id: null, nama: "", harga: "", satuan: "Kg", estimasi: "" }); 
+    setIsEditing(false);
+    Swal.fire({ title: "Tersimpan!", text: "Layanan berhasil disimpan.", icon: "success", timer: 1500, showConfirmButton: false });
   };
   
   const handleEditClick = (item) => { setFormData(item); setIsEditing(true); };
-  const hapusLayanan = (id) => { if (window.confirm("Hapus layanan ini?")) setLayananList(layananList.filter(item => item.id !== id)); };
+  
+  // Fungsi hapus dengan konfirmasi SweetAlert
+  const hapusLayanan = (id) => { 
+    Swal.fire({
+      title: "Hapus Layanan?",
+      text: "Layanan ini tidak akan tersedia lagi untuk kasir!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#e11d48",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setLayananList(layananList.filter(item => item.id !== id));
+        Swal.fire({ title: "Terhapus!", text: "Layanan berhasil dihapus.", icon: "success", confirmButtonColor: "#4f46e5" });
+      }
+    });
+  };
 
   return (
     <div className="space-y-8 pb-10 max-w-6xl mx-auto">
@@ -52,7 +75,6 @@ const KelolaLayanan = () => {
                 </select>
               </div>
               
-              {/* INPUT ESTIMASI DIPERBARUI DI SINI */}
               <div className="w-1/3">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Estimasi</label>
                 <div className="relative">
