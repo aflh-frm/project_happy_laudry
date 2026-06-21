@@ -3,13 +3,11 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const Laporan = () => {
-  // Pertahankan State Asli milikmu
   const [activeFilter, setActiveFilter] = useState("Kemarin");
   const [showLainnya, setShowLainnya] = useState(false);
   const [selectedDate, setSelectedDate] = useState("2026-05-20");
   const [selectedMonth, setSelectedMonth] = useState("2026-05");
 
-  // State baru untuk menampung data dari Laravel
   const [semuaTransaksi, setSemuaTransaksi] = useState([]);
   const [semuaPelanggan, setSemuaPelanggan] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,16 +37,12 @@ const Laporan = () => {
     setShowLainnya(false); 
   };
 
-  // =========================================================
-  // LOGIKA PEMPROSESAN FILTER DATA ASLI DARI DATABASE LARAVEL
-  // =========================================================
   const generateDataLive = () => {
     const hariIni = new Date();
     
     const dataTersaring = semuaTransaksi.filter((trx) => {
       const tglTrx = new Date(trx.created_at);
       
-      // Ambil format YYYY-MM-DD dan YYYY-MM dari data Laravel
       const stringFormat = tglTrx.toISOString().split('T')[0];
       const monthFormat = stringFormat.substring(0, 7);
 
@@ -81,14 +75,10 @@ const Laporan = () => {
       return true;
     });
 
-    // Hitung Metrik Secara Dinamis berdasarkan hasil filter data di atas
     const totalPenjualan = dataTersaring.reduce((sum, item) => sum + item.total_harga, 0);
     const totalBeratItem = dataTersaring.reduce((sum, item) => sum + (item.berat || 0), 0);
-    
-    // Cari jumlah pelanggan unik yang bertransaksi pada periode tersebut
     const pelangganUnik = [...new Set(dataTersaring.map(item => item.pelanggan_id))].length;
 
-    // Format output angka agar rapi (Contoh: jika jutaan ganti jadi JT, ribuan jadi RB)
     const formatMetrikPenjualan = (angka) => {
       if (angka >= 1000000) return (angka / 1000000).toFixed(1) + "JT";
       if (angka >= 1000) return (angka / 1000).toFixed(0) + "RB";
@@ -107,6 +97,8 @@ const Laporan = () => {
         return {
           tanggal: tgl,
           nota: trx.id_nota,
+          // DATA NAMA DITAMBAHKAN DI SINI
+          nama: trx.pelanggan ? trx.pelanggan.nama : "Terhapus", 
           layanan: trx.layanan ? trx.layanan.nama : "Pakaian Satuan",
           item: trx.berat ? `${trx.berat} Kg` : `${trx.rincian_pakaian?.length || 0} Pcs`,
           pendapatan: trx.total_harga
@@ -126,13 +118,12 @@ const Laporan = () => {
   }
 
   return (
-    <div className="space-y-8 pb-10 max-w-6xl mx-auto">
+    <div className="space-y-8 pb-10 max-w-7xl mx-auto">
       <div>
         <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Laporan Analitik</h1>
         <p className="text-slate-500 mt-1.5 font-medium">Pantau detail pendapatan dan operasional bisnis Anda.</p>
       </div>
 
-      {/* FILTER BAR ASLI MILIKMU */}
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/60 flex flex-wrap gap-4 items-center">
         <div className="flex flex-wrap gap-2 items-center relative bg-slate-50 p-1.5 rounded-xl border border-slate-200/80">
           {["Kemarin", "7 Hari Terakhir", "30 Hari Terakhir"].map((filter) => (
@@ -173,7 +164,6 @@ const Laporan = () => {
         )}
       </div>
 
-      {/* GRID KOTAK METRIK ASLI MILIKMU */}
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/60">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
           <div className="border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-6 rounded-2xl shadow-sm">
@@ -198,13 +188,14 @@ const Laporan = () => {
           <h3 className="text-lg font-bold text-slate-800">Rincian Transaksi Berdasarkan Periode</h3>
         </div>
         
-        {/* TABEL DATA ASLI MILIKMU */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider">
                 <th className="px-4 py-3 font-bold border-b border-slate-100">Waktu / Tanggal</th>
                 <th className="px-4 py-3 font-bold border-b border-slate-100 text-center">ID Nota</th>
+                {/* KOLOM HEADER NAMA DITAMBAHKAN DI SINI */}
+                <th className="px-4 py-3 font-bold border-b border-slate-100">Pelanggan</th>
                 <th className="px-4 py-3 font-bold border-b border-slate-100">Layanan Utama</th>
                 <th className="px-4 py-3 font-bold border-b border-slate-100 text-center">Total Item</th>
                 <th className="px-4 py-3 font-bold border-b border-slate-100 text-right">Pendapatan</th>
@@ -213,13 +204,15 @@ const Laporan = () => {
             <tbody className="text-sm font-medium">
               {currentData.tabel.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-4 py-8 text-center text-slate-400 italic">Tidak ada transaksi untuk periode ini.</td>
+                  <td colSpan="6" className="px-4 py-8 text-center text-slate-400 italic">Tidak ada transaksi untuk periode ini.</td>
                 </tr>
               ) : (
                 currentData.tabel.map((row, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
                     <td className="px-4 py-5 text-slate-800">{row.tanggal}</td>
                     <td className="px-4 py-5 text-center text-slate-900 font-extrabold">{row.nota}</td>
+                    {/* DATA NAMA PELANGGAN DITAMPILKAN DI SINI */}
+                    <td className="px-4 py-5 font-bold text-slate-700">{row.nama}</td>
                     <td className="px-4 py-5">
                       <span className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-100">
                         {row.layanan}
