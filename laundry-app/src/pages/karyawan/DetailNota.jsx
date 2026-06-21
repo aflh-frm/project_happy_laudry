@@ -1,91 +1,141 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import Swal from "sweetalert2";
 
 const DetailNota = () => {
   const { id } = useParams(); 
   const navigate = useNavigate();
 
-  // 1. Data Dummy Layanan Beserta Harga Dasar
-  const dataLayanan = [
-    { nama: "Cuci Komplit (Reguler)", harga: 6000, satuan: "Kg" },
-    { nama: "Cuci Komplit (Kilat)", harga: 10000, satuan: "Kg" },
-    { nama: "Setrika Saja", harga: 4000, satuan: "Kg" },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [notaData, setNotaData] = useState(null);
 
-  // 2. Data Dummy Pakaian Beserta Harga Tambahan (Satuan)
-  // Baju biasa = 0 (ikut kiloan). Barang khusus ada harganya.
-  const dataPakaianSpesifik = [
-    { jenis: "Kaos", harga: 0 },
-    { jenis: "Kemeja", harga: 0 },
-    { jenis: "Celana Panjang", harga: 0 },
-    { jenis: "Handuk", harga: 0 },
-    { jenis: "Sprei", harga: 12000 },
-    { jenis: "Jas", harga: 15000 },
-    { jenis: "Selimut", harga: 10000 },
-    { jenis: "Karpet", harga: 25000 },
-  ];
-
-  const [nota, setNota] = useState({
-    pelanggan: "Budi Santoso", hp: "08123456789", 
-    layanan: "Cuci Komplit (Reguler)", berat: 5,
-    rincian: [{ jenis: "Kaos", jumlah: 3 }, { jenis: "Selimut", jumlah: 1 }], 
-    status: "Proses"
-  });
-
-  const [tempPakaian, setTempPakaian] = useState(dataPakaianSpesifik[0].jenis);
+  // State untuk form edit
+  const [layanan, setLayanan] = useState("");
+  const [berat, setBerat] = useState(0);
+  const [rincian, setRincian] = useState([]);
+  
+  const [dataLayanan, setDataLayanan] = useState([]);
+  const [dataPakaianSpesifik, setDataPakaianSpesifik] = useState([]);
+  const [tempPakaian, setTempPakaian] = useState("");
   const [tempJumlah, setTempJumlah] = useState(1);
 
-  // ==========================================
-  // LOGIKA PERHITUNGAN BIAYA OTOMATIS
-  // ==========================================
-  const layananTerpilih = dataLayanan.find(l => l.nama === nota.layanan);
-  const biayaDasar = (layananTerpilih?.harga || 0) * nota.berat;
+  const API_TRANSAKSI = `http://localhost:8000/api/transaksi/${id}`;
+  const API_LAYANAN = "http://localhost:8000/api/layanan";
+  const API_PAKAIAN = "http://localhost:8000/api/pakaian";
+
+  // 1. AMBIL DATA TRANSAKSI & MASTER DATA
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+      const [resTransaksi, resLayanan, resPakaian] = await Promise.all([
+        axios.get(API_TRANSAKSI),
+        axios.get(API_LAYANAN),
+        axios.get(API_PAKAIAN)
+      ]);
+
+      const trx = resTransaksi.data;
+      setNotaData(trx);
+      
+      // Masukkan data asli ke dalam state form agar bisa diedit
+      setLayanan(trx.layanan_id || "");
+      setBerat(trx.berat || 0);
+      setRincian(trx.rincian_pakaian || []);
+
+      setDataLayanan(resLayanan.data);
+      setDataPakaianSpesifik(resPakaian.data);
+
+      if (resPakaian.data.length > 0) {
+        setTempPakaian(resPakaian.data[0].nama);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Gagal mengambil data:", error);
+      Swal.fire("Error", "Nota tidak ditemukan atau server mati.", "error")
+        .then(() => navigate("/karyawan/kelola-nota"));
+    }
+  };
+
+  useEffect(() => {
+    fetchAllData();
+  }, [id]);
+
+  // 2. LOGIKA HITUNG BIAYA (Real-time saat diedit)
+  const layananTerpilih = dataLayanan.find(l => l.id === Number(layanan));
+  const biayaDasar = layananTerpilih ? layananTerpilih.harga * berat : 0;
 
   const getHargaPakaian = (namaJenis) => {
-    const pakaian = dataPakaianSpesifik.find(p => p.jenis === namaJenis);
+    const pakaian = dataPakaianSpesifik.find(p => p.nama === namaJenis);
     return pakaian ? pakaian.harga : 0;
   };
 
-  const biayaTambahan = nota.rincian.reduce((total, item) => {
+  const biayaTambahan = rincian.reduce((total, item) => {
     return total + (getHargaPakaian(item.jenis) * item.jumlah);
   }, 0);
 
   const totalTagihan = biayaDasar + biayaTambahan;
 
-  // ==========================================
-  // HANDLER FORM
-  // ==========================================
-  const tambahRincian = (e) => {
-    e.preventDefault();
-    if (tempJumlah > 0) { 
-      setNota({ ...nota, rincian: [...nota.rincian, { jenis: tempPakaian, jumlah: tempJumlah }] }); 
-      setTempJumlah(1); 
+  // 3. HANDLER FORM EDIT
+  const tambahRincian = () => {
+    if (!tempPakaian) return;
+    if (tempJumlah > 0) {
+      setRincian([...rincian, { jenis: tempPakaian, jumlah: tempJumlah }]);
+      setTempJumlah(1);
     }
   };
   
-  const hapusRincian = (index) => {
-    setNota({ ...nota, rincian: nota.rincian.filter((_, i) => i !== index) });
-  };
+  const hapusRincian = (index) => setRincian(rincian.filter((_, i) => i !== index));
 
-  const handleSimpan = (e) => {
+  const handleSimpanEdit = async (e) => {
     e.preventDefault();
-    Swal.fire({
-      title: "Berhasil Disimpan!",
-      text: `Rincian nota ${id} telah diperbarui.`,
-      icon: "success",
-      confirmButtonText: "Kembali ke Daftar",
-      confirmButtonColor: "#4f46e5"
-    }).then((result) => {
-      if (result.isConfirmed) {
-        navigate("/karyawan/kelola-nota");
-      }
-    });
+    try {
+      const payload = {
+        layanan_id: layanan ? Number(layanan) : null,
+        berat: layanan ? berat : 0,
+        rincian_pakaian: rincian,
+        total_harga: totalTagihan,
+        status: notaData.status // Status tetap tidak berubah saat edit pesanan
+      };
+
+      await axios.put(API_TRANSAKSI, payload);
+      
+      Swal.fire({
+        title: "Berhasil Diperbarui!",
+        text: `Rincian pesanan untuk nota ${id} telah tersimpan.`,
+        icon: "success",
+        confirmButtonColor: "#4f46e5"
+      });
+      fetchAllData(); // Refresh tampilan setelah sukses
+    } catch (error) {
+      console.error("Gagal update data:", error);
+      Swal.fire("Error!", "Gagal menyimpan perubahan ke database.", "error");
+    }
   };
 
-  const ubahStatus = (statusBaru) => {
-    setNota({...nota, status: statusBaru});
+  // 4. HANDLER UPDATE STATUS
+  const ubahStatus = async (statusBaru) => {
+    try {
+      await axios.put(API_TRANSAKSI, { status: statusBaru });
+      Swal.fire({
+        title: "Status Diperbarui!",
+        text: `Status cucian berubah menjadi: ${statusBaru === 'Selesai' ? 'Siap Diambil' : 'Sedang Diproses'}.`,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+      });
+      fetchAllData();
+    } catch (error) {
+      Swal.fire("Error!", "Gagal memperbarui status.", "error");
+    }
   };
+
+  if (loading || !notaData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <span className="loading loading-spinner loading-lg text-indigo-600"></span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-5xl pb-10 mx-auto">
@@ -94,8 +144,8 @@ const DetailNota = () => {
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
         </button>
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Detail Nota: {id}</h1>
-          <p className="text-slate-500 mt-1 font-medium">Periksa pesanan, rincian biaya, atau ubah status.</p>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Detail Nota: {notaData.id_nota}</h1>
+          <p className="text-slate-500 mt-1 font-medium">Perbaiki isi pesanan atau ubah status ke selesai.</p>
         </div>
       </div>
 
@@ -105,10 +155,15 @@ const DetailNota = () => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
             <div className="relative z-10">
               <p className="text-xs text-indigo-300 font-bold uppercase tracking-wider mb-1">Data Pelanggan</p>
-              <p className="font-extrabold text-xl">{nota.pelanggan} <span className="font-medium text-indigo-200 text-base ml-2">({nota.hp})</span></p>
+              <p className="font-extrabold text-xl">
+                {notaData.pelanggan?.nama || "Terhapus"} 
+                <span className="font-medium text-indigo-200 text-base ml-2">
+                  ({notaData.pelanggan?.hp || "-"})
+                </span>
+              </p>
             </div>
             <div className="bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm border border-white/10 relative z-10">
-              <span className="text-sm font-bold tracking-wide">ID: {id}</span>
+              <span className="text-sm font-bold tracking-wide">ID: {notaData.id_nota}</span>
             </div>
         </div>
 
@@ -118,19 +173,20 @@ const DetailNota = () => {
           {/* ========================================== */}
           <div className="lg:col-span-3 space-y-6">
             <h2 className="font-bold text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">📝 Perbaiki Isi Pesanan</h2>
-            <form onSubmit={handleSimpan} className="space-y-6">
+            <form onSubmit={handleSimpanEdit} className="space-y-6">
               <div className="grid grid-cols-2 gap-5">
                 <div className="col-span-2">
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jenis Layanan</label>
-                  <select value={nota.layanan} onChange={(e) => setNota({...nota, layanan: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-700 cursor-pointer">
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jenis Layanan Dasar</label>
+                  <select value={layanan} onChange={(e) => setLayanan(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-700 cursor-pointer">
+                    <option value="">-- Tanpa Layanan Dasar --</option>
                     {dataLayanan.map(l => (
-                      <option key={l.nama} value={l.nama}>{l.nama} (Rp {l.harga}/{l.satuan})</option>
+                      <option key={l.id} value={l.id}>{l.nama} (Rp {l.harga}/{l.satuan})</option>
                     ))}
                   </select>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Berat / Jumlah</label>
-                  <input type="number" min="1" value={nota.berat} onChange={(e) => setNota({...nota, berat: Number(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-extrabold text-slate-800 text-lg" />
+                  <input type="number" min="1" value={berat} onChange={(e) => setBerat(Number(e.target.value))} disabled={!layanan} className={`w-full border rounded-xl px-4 py-3 outline-none transition-all font-bold text-lg ${!layanan ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-50 border-slate-200 text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500'}`} />
                 </div>
               </div>
 
@@ -141,8 +197,8 @@ const DetailNota = () => {
                     <label className="block text-xs font-bold text-slate-400 mb-1">Jenis Pakaian</label>
                     <select value={tempPakaian} onChange={(e) => setTempPakaian(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm font-medium cursor-pointer">
                       {dataPakaianSpesifik.map(p => (
-                        <option key={p.jenis} value={p.jenis}>
-                          {p.jenis} {p.harga > 0 ? `(+Rp ${p.harga.toLocaleString('id-ID')})` : '(Termasuk Kiloan)'}
+                        <option key={p.id} value={p.nama}>
+                          {p.nama} {p.harga > 0 ? `(+Rp ${p.harga.toLocaleString('id-ID')})` : '(Termasuk Kiloan)'}
                         </option>
                       ))}
                     </select>
@@ -155,8 +211,8 @@ const DetailNota = () => {
                 </div>
                 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {nota.rincian.length === 0 && <span className="text-sm text-slate-400 italic">Belum ada rincian yang ditambahkan.</span>}
-                  {nota.rincian.map((item, index) => {
+                  {rincian.length === 0 && <span className="text-sm text-slate-400 italic">Tidak ada rincian pakaian.</span>}
+                  {rincian.map((item, index) => {
                     const hargaItem = getHargaPakaian(item.jenis);
                     return (
                       <span key={index} className={`border px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm ${hargaItem > 0 ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-white border-slate-200 text-slate-700'}`}>
@@ -168,7 +224,7 @@ const DetailNota = () => {
                 </div>
               </div>
 
-              {/* KOTAK RINGKASAN BIAYA MEWAH */}
+              {/* KOTAK RINGKASAN BIAYA */}
               <div className="bg-slate-900 text-white p-6 rounded-2xl shadow-inner relative overflow-hidden">
                 <div className="absolute -right-10 -top-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl"></div>
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-700/50 pb-3 flex items-center gap-2">
@@ -177,12 +233,13 @@ const DetailNota = () => {
                 
                 <div className="space-y-3 text-sm relative z-10">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-300">{layananTerpilih?.nama} <span className="text-slate-500">({nota.berat} {layananTerpilih?.satuan})</span></span>
+                    <span className="text-slate-300">
+                      {layananTerpilih ? `${layananTerpilih.nama} (${berat} ${layananTerpilih.satuan})` : "Tanpa Layanan Dasar"}
+                    </span>
                     <span className="font-bold">Rp {biayaDasar.toLocaleString('id-ID')}</span>
                   </div>
                   
-                  {/* Hanya tampilkan pakaian yang ada biaya tambahannya */}
-                  {nota.rincian.filter(r => getHargaPakaian(r.jenis) > 0).map((r, i) => (
+                  {rincian.map((r, i) => (
                     <div key={i} className="flex justify-between items-center">
                       <span className="text-slate-300 pl-4 relative">
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-[1px] bg-slate-600"></span>
@@ -199,7 +256,7 @@ const DetailNota = () => {
                 </div>
               </div>
               
-              <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl shadow-md transition-all text-lg">
+              <button type="submit" disabled={!layanan && rincian.length === 0} className="w-full bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white font-bold py-4 rounded-xl shadow-md transition-all text-lg">
                 Simpan Perubahan Pesanan
               </button>
             </form>
@@ -213,47 +270,36 @@ const DetailNota = () => {
             
             <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 flex flex-col items-center justify-center py-10 sticky top-28">
               <ul className="timeline timeline-vertical">
-                {/* STEP 1: Pesanan Masuk (Selalu Aktif) */}
                 <li>
                   <div className="timeline-start timeline-box border-none shadow-sm font-bold text-slate-700 bg-white">Pesanan Masuk</div>
                   <div className="timeline-middle">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="text-indigo-600 h-6 w-6">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="text-indigo-600 h-6 w-6"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
                   </div>
                   <hr className="bg-indigo-600" />
                 </li>
-                
-                {/* STEP 2: Sedang Diproses */}
                 <li>
-                  <hr className={nota.status === "Selesai" || nota.status === "Proses" ? "bg-indigo-600" : "bg-slate-200"} />
+                  <hr className={notaData.status === "Selesai" || notaData.status === "Proses" ? "bg-indigo-600" : "bg-slate-200"} />
                   <div className="timeline-middle">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-6 w-6 ${nota.status === "Selesai" || nota.status === "Proses" ? "text-indigo-600" : "text-slate-300"}`}>
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-6 w-6 ${notaData.status === "Selesai" || notaData.status === "Proses" ? "text-indigo-600" : "text-slate-300"}`}><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
                   </div>
-                  <div className={`timeline-end timeline-box border-none shadow-sm font-bold ${nota.status === "Selesai" || nota.status === "Proses" ? "text-indigo-700 bg-white" : "text-slate-400 bg-slate-100"}`}>
+                  <div className={`timeline-end timeline-box border-none shadow-sm font-bold ${notaData.status === "Selesai" || notaData.status === "Proses" ? "text-indigo-700 bg-white" : "text-slate-400 bg-slate-100"}`}>
                     Sedang Diproses
                   </div>
-                  <hr className={nota.status === "Selesai" ? "bg-indigo-600" : "bg-slate-200"} />
+                  <hr className={notaData.status === "Selesai" ? "bg-indigo-600" : "bg-slate-200"} />
                 </li>
-                
-                {/* STEP 3: Selesai */}
                 <li>
-                  <hr className={nota.status === "Selesai" ? "bg-indigo-600" : "bg-slate-200"} />
-                  <div className={`timeline-start timeline-box border-none shadow-sm font-bold ${nota.status === "Selesai" ? "text-emerald-700 bg-white" : "text-slate-400 bg-slate-100"}`}>
+                  <hr className={notaData.status === "Selesai" ? "bg-indigo-600" : "bg-slate-200"} />
+                  <div className={`timeline-start timeline-box border-none shadow-sm font-bold ${notaData.status === "Selesai" ? "text-emerald-700 bg-white" : "text-slate-400 bg-slate-100"}`}>
                     Siap Diambil
                   </div>
                   <div className="timeline-middle">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-6 w-6 ${nota.status === "Selesai" ? "text-emerald-500" : "text-slate-300"}`}>
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`h-6 w-6 ${notaData.status === "Selesai" ? "text-emerald-500" : "text-slate-300"}`}><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
                   </div>
                 </li>
               </ul>
 
               <div className="mt-8 w-full">
-                {nota.status === "Proses" ? (
+                {notaData.status === "Proses" ? (
                   <button onClick={() => ubahStatus("Selesai")} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold py-4 rounded-xl shadow-lg shadow-emerald-500/30 transition-all transform hover:-translate-y-1 flex justify-center items-center gap-2 text-lg">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                     Tandai Siap Diambil

@@ -70,8 +70,10 @@ function App() {
                 <Route path="input-cucian" element={<InputCucian />} />
                 <Route path="kelola-pelanggan" element={<KelolaPelanggan />} />
                 <Route path="kelola-nota" element={<KelolaNota />} />
-                {/* INI ADALAH DYNAMIC ROUTE (:id akan menangkap kode nota) */}
-                <Route path="kelola-nota/:id" element={<DetailNota />} /> 
+                
+                {/* UBAH BARIS DI BAWAH INI */}
+                <Route path="detail-nota/:id" element={<DetailNota />} /> 
+                
               </Routes>
             </ProtectedRoute>
           } />
