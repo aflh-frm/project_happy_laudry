@@ -192,13 +192,13 @@ const Laporan = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider">
-                <th className="px-4 py-3 font-bold border-b border-slate-100">Waktu / Tanggal</th>
-                <th className="px-4 py-3 font-bold border-b border-slate-100 text-center">ID Nota</th>
-                {/* KOLOM HEADER NAMA DITAMBAHKAN DI SINI */}
-                <th className="px-4 py-3 font-bold border-b border-slate-100">Pelanggan</th>
-                <th className="px-4 py-3 font-bold border-b border-slate-100">Layanan Utama</th>
-                <th className="px-4 py-3 font-bold border-b border-slate-100 text-center">Total Item</th>
-                <th className="px-4 py-3 font-bold border-b border-slate-100 text-right">Pendapatan</th>
+                {/* Diberi batasan lebar (width) agar tidak merenggang otomatis */}
+                <th className="px-4 py-3 font-bold border-b border-slate-100 w-[15%] whitespace-nowrap">Waktu / Tanggal</th>
+                <th className="px-4 py-3 font-bold border-b border-slate-100 w-[15%]">ID Nota</th>
+                <th className="px-4 py-3 font-bold border-b border-slate-100 w-[20%]">Pelanggan</th>
+                <th className="px-4 py-3 font-bold border-b border-slate-100 w-[25%]">Layanan Utama</th>
+                <th className="px-4 py-3 font-bold border-b border-slate-100 text-center w-[10%]">Total Item</th>
+                <th className="px-4 py-3 font-bold border-b border-slate-100 text-right w-[15%]">Pendapatan</th>
               </tr>
             </thead>
             <tbody className="text-sm font-medium">
@@ -210,16 +210,16 @@ const Laporan = () => {
                 currentData.tabel.map((row, idx) => (
                   <tr key={idx} className="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
                     <td className="px-4 py-5 text-slate-800">{row.tanggal}</td>
-                    <td className="px-4 py-5 text-center text-slate-900 font-extrabold">{row.nota}</td>
-                    {/* DATA NAMA PELANGGAN DITAMPILKAN DI SINI */}
-                    <td className="px-4 py-5 font-bold text-slate-700">{row.nama}</td>
+                    {/* Hapus text-center agar ID Nota rata kiri dan menempel rapi dengan Tanggal */}
+                    <td className="px-4 py-5 text-slate-900 font-extrabold">{row.nota}</td>
+                    <td className="px-4 py-5 font-bold text-slate-700 capitalize">{row.nama}</td>
                     <td className="px-4 py-5">
-                      <span className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-100">
+                      <span className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-100 whitespace-nowrap">
                         {row.layanan}
                       </span>
                     </td>
                     <td className="px-4 py-5 text-center text-slate-600">{row.item}</td>
-                    <td className="px-4 py-5 text-right font-extrabold text-emerald-600">
+                    <td className="px-4 py-5 text-right font-extrabold text-emerald-600 whitespace-nowrap">
                       Rp {row.pendapatan.toLocaleString('id-ID')}
                     </td>
                   </tr>
