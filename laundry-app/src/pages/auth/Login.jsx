@@ -1,71 +1,112 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import usersData from "../../data/users.json";
+import axios from "axios";
+import Swal from "sweetalert2";
 
 const Login = () => {
-  const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const foundUser = usersData.find((user) => user.username === username && user.password === password);
-    if (foundUser) {
+    setLoading(true);
+
+    try {
+      // Tembak API Login Laravel
+      const response = await axios.post("http://localhost:8000/api/login", {
+        email: email,
+        password: password
+      });
+
+      const userData = response.data.user;
+
+      // Simpan data login ke LocalStorage
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("role", foundUser.role);
-      localStorage.setItem("nama", foundUser.nama);
-      navigate(foundUser.role === "owner" ? "/owner/dashboard" : "/karyawan/input-cucian");
-    } else {
-      setErrorMsg("Username atau password tidak valid.");
+      localStorage.setItem("role", userData.role);
+      localStorage.setItem("userName", userData.name);
+
+      Swal.fire({
+        title: `Selamat Datang, ${userData.name}!`,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      // Arahkan sesuai jabatan (role)
+      if (userData.role === "owner") {
+        navigate("/owner/dashboard");
+      } else {
+        navigate("/karyawan/input-cucian");
+      }
+      
+    } catch (error) {
+      console.error("Login gagal:", error);
+      Swal.fire("Akses Ditolak!", "Email atau Password yang Anda masukkan salah.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md">
-      {/* Kartu Login Glassmorphism */}
-      <div className="bg-white/10 backdrop-blur-xl p-10 rounded-[2rem] shadow-2xl border border-white/20">
+    <div className="flex justify-center items-center w-full max-w-md animate-fade-in relative z-10">
+      <div className="bg-white/10 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-white/20 w-full transform transition-all hover:scale-[1.01]">
+        
         <div className="text-center mb-10">
-          <div className="bg-gradient-to-tr from-indigo-500 to-purple-500 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/30 transform rotate-3 hover:rotate-0 transition-transform duration-300">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
-            </svg>
+          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 w-20 h-20 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-6 transform rotate-3 hover:rotate-6 transition-all">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg>
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Happy Laundry</h1>
-          <p className="text-indigo-200 mt-2 text-sm font-medium">Sistem Manajemen Premium</p>
+          <h2 className="text-3xl font-extrabold text-white tracking-tight">Happy Laundry</h2>
+          <p className="text-indigo-200 mt-2 text-sm font-medium">Masuk untuk mengelola sistem kasir</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
-          {errorMsg && (
-            <div className="bg-red-500/20 border border-red-500/50 text-red-100 p-3 rounded-xl text-sm text-center backdrop-blur-md">
-              {errorMsg}
-            </div>
-          )}
           <div>
-            <label className="block text-sm font-semibold text-indigo-100 mb-2 pl-1">Username</label>
-            <input
-              type="text" required value={username} onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-indigo-300/50 outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
-              placeholder="Masukkan username"
+            <label className="block text-indigo-200 text-xs font-bold mb-2 uppercase tracking-wider">Email Address</label>
+            <input 
+              type="email" 
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-indigo-300/50 outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/10 transition-all font-medium" 
+              placeholder="nama@laundry.com" 
             />
           </div>
+
           <div>
-            <label className="block text-sm font-semibold text-indigo-100 mb-2 pl-1">Password</label>
-            <input
-              type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-indigo-300/50 outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
-              placeholder="••••••••"
+            <label className="block text-indigo-200 text-xs font-bold mb-2 uppercase tracking-wider">Password</label>
+            <input 
+              type="password" 
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-indigo-300/50 outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white/10 transition-all font-medium" 
+              placeholder="••••••••" 
             />
           </div>
-          <button type="submit" className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold py-4 px-4 rounded-xl shadow-lg shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-1 mt-4">
-            Masuk ke Sistem
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className={`w-full py-4 rounded-xl font-bold text-white transition-all transform shadow-lg ${loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 hover:-translate-y-1 shadow-indigo-500/25'}`}
+          >
+            {loading ? 'Memeriksa Akun...' : 'Masuk ke Dashboard 🚀'}
           </button>
         </form>
+
+        <div className="mt-8 text-center text-xs text-indigo-300/80 font-medium bg-black/20 p-4 rounded-xl border border-white/5">
+          <p className="mb-1 text-indigo-200">Gunakan akun berikut untuk testing:</p>
+          <div className="flex justify-between px-2">
+            <span><b>owner@laundry.com</b></span>
+            <span>Pass: password123</span>
+          </div>
+          <div className="flex justify-between px-2 mt-1">
+            <span><b>karyawan@laundry.com</b></span>
+            <span>Pass: password123</span>
+          </div>
+        </div>
       </div>
-      {/* Footer Text */}
-      <p className="text-center text-indigo-300/50 mt-8 text-xs font-medium tracking-wider">
-        &copy; 2026 HAPPY LAUNDRY. ALL RIGHTS RESERVED.
-      </p>
     </div>
   );
 };
