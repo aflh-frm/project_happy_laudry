@@ -33,14 +33,21 @@ const DashboardOwner = () => {
 
       setTransaksiList(resTransaksi.data);
       setTotalPelanggan(resPelanggan.data.length);
-      
-      // Mengambil nilai max_quota asli dari tabel MySQL kuotas
       setMaxQuota(resKuota.data.max_quota);
       setTempQuota(resKuota.data.max_quota);
       
-      // Hitung total berat pesanan berstatus "Proses" untuk update Current Load otomatis
+      // ==========================================
+      // LOGIKA BARU: RESET HARIAN
+      // ==========================================
+      // 1. Ambil format tanggal hari ini (Contoh: "2026-07-13")
+      const stringHariIni = new Date().toISOString().split('T')[0];
+      
+      // 2. Hitung beban hanya dari nota HARI INI yang masih PROSES
       const bebanAktif = resTransaksi.data
-        .filter(trx => trx.status === "Proses")
+        .filter(trx => {
+          const stringTglTrx = new Date(trx.created_at).toISOString().split('T')[0];
+          return trx.status === "Proses" && stringTglTrx === stringHariIni;
+        })
         .reduce((total, trx) => total + (trx.berat || 0), 0);
       
       setCurrentLoad(bebanAktif);
